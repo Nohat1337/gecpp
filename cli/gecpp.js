@@ -1,5 +1,9 @@
+#!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+
+const VERSION = "1.0.0-kernel-secure";
 
 const stdLib = `
 const _sec = {
@@ -24,9 +28,20 @@ const out = {
 };
 `;
 
-function compile(code) {
+function compile(code, options = {}) {
   let js = code;
-  js = js.replace(/\/\/.*/g, '');
+
+  // Optimization Level -O2
+  if (options.optimization === 2) {
+    // Remove all comments and extra whitespace
+    js = js.replace(/\/\/.*/g, '');
+    js = js.replace(/\/\*[\s\S]*?\*\//g, '');
+    js = js.replace(/\s+/g, ' ');
+  } else {
+    js = js.replace(/\/\/.*/g, '');
+  }
+
+  // Syntax Transformation
   js = js.replace(/\bfn\b/g, 'async function');
   js = js.replace(/\blet\s+mut\b/g, 'let');
   js = js.replace(/\blet\b/g, 'const');
@@ -34,13 +49,13 @@ function compile(code) {
   js = js.replace(/\balloc\((.*?)\)/g, '_sec.alloc($1)');
   js = js.replace(/\baudit!\{(.*?)\}/gs, '_sec.audit(\`$1\`)');
   
-  // Handle stream operators out << "msg" << endl;
+  // Stream operators
   js = js.replace(/\bout\s*<<\s*(.*?);/g, (match, p1) => {
     const parts = p1.split('<<').map(p => p.trim());
     return parts.map(p => `out.write(${p === 'endl' ? 'out.endl' : p})`).join('; ') + ';';
   });
 
-  return `
+  let output = `
 (async () => {
   ${stdLib}
   try {
@@ -50,34 +65,74 @@ function compile(code) {
     process.exit(1);
   }
 })();`;
+
+  if (options.optimization === 2) {
+    output = output.replace(/\s+/g, ' ').trim();
+  }
+
+  return output;
+}
+
+function printHelp() {
+  console.log(`GEC++ Secure Kernel Compiler v${VERSION}`);
+  console.log("Usage: gecpp [options] <file.gecpp>");
+  console.log("");
+  console.log("Options:");
+  console.log("  -o <file>      Specify output file");
+  console.log("  -O2            Enable high-level optimizations");
+  console.log("  -r, --run      Compile and run immediately");
+  console.log("  -v, --version  Show version information");
+  console.log("  -h, --help     Show this help message");
 }
 
 const args = process.argv.slice(2);
-if (args.length === 0) {
-  console.log("GEC++ Compiler v1.0.0");
-  console.log("Usage: gecpp <file.gecpp>");
-  process.exit(0);
+let inputFile = null;
+let outputFile = null;
+let optimization = 0;
+let runImmediately = false;
+
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '-o') {
+    outputFile = args[++i];
+  } else if (arg === '-O2') {
+    optimization = 2;
+  } else if (arg === '-r' || arg === '--run') {
+    runImmediately = true;
+  } else if (arg === '-v' || arg === '--version') {
+    console.log(`GEC++ v${VERSION}`);
+    process.exit(0);
+  } else if (arg === '-h' || arg === '--help') {
+    printHelp();
+    process.exit(0);
+  } else if (!arg.startsWith('-')) {
+    inputFile = arg;
+  }
 }
 
-const filePath = path.resolve(args[0]);
-if (!fs.existsSync(filePath)) {
-  console.error("Error: File not found " + filePath);
+if (!inputFile) {
+  printHelp();
   process.exit(1);
 }
 
-const code = fs.readFileSync(filePath, 'utf8');
-const compiledJs = compile(code);
+const fullInputPath = path.resolve(inputFile);
+if (!fs.existsSync(fullInputPath)) {
+  console.error(`Error: File not found ${fullInputPath}`);
+  process.exit(1);
+}
 
-// For a real compiler, we might output an executable. 
-// Here we execute it via the Node runtime for the demo.
-const tempFile = filePath + ".tmp.js";
-fs.writeFileSync(tempFile, compiledJs);
+const code = fs.readFileSync(fullInputPath, 'utf8');
+const compiledJs = compile(code, { optimization });
 
-const { execSync } = require('child_process');
-try {
-  execSync(`node ${tempFile}`, { stdio: 'inherit' });
-} catch (e) {
-  // Error handled by child process stdio
-} finally {
+if (runImmediately) {
+  const tempFile = fullInputPath + ".tmp.js";
+  fs.writeFileSync(tempFile, compiledJs);
+  try {
+    execSync(`node ${tempFile}`, { stdio: 'inherit' });
+  } catch (e) {}
   fs.unlinkSync(tempFile);
+} else {
+  const outPath = outputFile || (inputFile.replace(/\.gecpp$/, '') + ".js");
+  fs.writeFileSync(outPath, compiledJs);
+  console.log(`Successfully compiled ${inputFile} -> ${outPath} [O${optimization}]`);
 }

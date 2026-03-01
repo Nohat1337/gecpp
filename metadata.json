@@ -1,5 +1,5 @@
 {
-  "name": "GEC++ Kernel IDE",
-  "description": "A high-performance environment for GEC++, a Rust-inspired, secure-by-default language designed for kernel development and low-level systems programming.",
+  "name": "GEC++ CLI Compiler",
+  "description": "A high-performance CLI compiler for GEC++, a secure-by-default language for kernel development. Supports optimization flags and native Linux x86-64 builds.",
   "requestFramePermissions": []
 }

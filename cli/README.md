@@ -1,42 +1,43 @@
-# GEC++ Compiler Installation
+# GEC++ Secure Kernel Compiler
 
-## Prerequisites
-- Node.js (v18+)
-- npm
+A high-performance, secure-by-default compiler for kernel development.
 
-## Build from Source
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/gecpp-kernel.git
-   cd gecpp-kernel/cli
-   ```
+## Installation (Linux x86-64)
+1.  **Clone/Download** the project.
+2.  **Install**:
+    ```bash
+    sudo make install
+    ```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## CLI Usage
+The `gecpp` command is your primary interface.
 
-3. Build the x86-64 Linux binary:
-   ```bash
-   npm run build-linux
-   ```
-
-4. Install globally:
-   ```bash
-   sudo mv bin/gecpp /usr/local/bin/
-   ```
-
-## Usage
-Create a file `main.gecpp`:
-```rust
-fn main() {
-    out << "Hello from GEC++ Kernel!" << endl;
-    audit! { System initialized }
-}
-main();
-```
-
-Run it:
+### Basic Compilation
 ```bash
 gecpp main.gecpp
 ```
+Produces `main.js` (executable via GEC++ runtime).
+
+### Optimization (-O2)
+Enable high-level optimizations (minification, comment stripping, etc.):
+```bash
+gecpp -O2 main.gecpp
+```
+
+### Compile and Run
+Compile and execute immediately without saving the output file:
+```bash
+gecpp -r main.gecpp
+```
+
+### Custom Output
+```bash
+gecpp -o my_kernel.bin main.gecpp
+```
+
+## Syntax Overview
+- `fn`: Function declaration.
+- `let` / `let mut`: Immutability by default.
+- `panic!()`: Kernel halt.
+- `audit!{}`: Security logging.
+- `alloc()`: Secure memory allocation.

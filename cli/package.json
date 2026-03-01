@@ -1,7 +1,7 @@
 {
   "name": "gecpp-compiler",
   "version": "1.0.0",
-  "description": "GEC++ Secure Kernel Compiler CLI",
+  "description": "GEC++ Secure Kernel Compiler CLI with optimization flags",
   "main": "gecpp.js",
   "bin": {
     "gecpp": "./gecpp.js"
