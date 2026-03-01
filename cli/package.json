@@ -1,0 +1,16 @@
+{
+  "name": "gecpp-compiler",
+  "version": "1.0.0",
+  "description": "GEC++ Secure Kernel Compiler CLI",
+  "main": "gecpp.js",
+  "bin": {
+    "gecpp": "./gecpp.js"
+  },
+  "scripts": {
+    "build-linux": "npx pkg . --targets node18-linux-x64 --output bin/gecpp"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}

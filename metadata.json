@@ -1,0 +1,5 @@
+{
+  "name": "GEC++ Kernel IDE",
+  "description": "A high-performance environment for GEC++, a Rust-inspired, secure-by-default language designed for kernel development and low-level systems programming.",
+  "requestFramePermissions": []
+}
